@@ -31,11 +31,11 @@ class _TvSeriesDetailsState extends State<TvSeriesDetails> {
   Future<void> _fetchDetails() async {
     final base = 'https://api.themoviedb.org/3/tv/${widget.id}';
     final responses = await Future.wait([
-      http.get(Uri.parse('$base?api_key=$apikey')),
-      http.get(Uri.parse('$base/reviews?api_key=$apikey')),
-      http.get(Uri.parse('$base/similar?api_key=$apikey')),
-      http.get(Uri.parse('$base/recommendations?api_key=$apikey')),
-      http.get(Uri.parse('$base/videos?api_key=$apikey')),
+      http.get(Uri.parse('$base'), headers: apiHeaders),
+      http.get(Uri.parse('$base/reviews'), headers: apiHeaders),
+      http.get(Uri.parse('$base/similar'), headers: apiHeaders),
+      http.get(Uri.parse('$base/recommendations'), headers: apiHeaders),
+      http.get(Uri.parse('$base/videos'), headers: apiHeaders),
     ]);
 
     if (responses[0].statusCode == 200) {

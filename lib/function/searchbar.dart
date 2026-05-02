@@ -25,8 +25,8 @@ class _searchbarfuncState extends State<searchbarfunc> {
     if (val.isEmpty) return;
     searchresult.clear();
     var searchurl =
-        'https://api.themoviedb.org/3/search/multi?api_key=$apikey&query=$val';
-    var searchresponse = await http.get(Uri.parse(searchurl));
+        'https://api.themoviedb.org/3/search/multi?query=$val';
+    var searchresponse = await http.get(Uri.parse(searchurl), headers: apiHeaders);
     if (searchresponse.statusCode == 200) {
       var tempdata = jsonDecode(searchresponse.body);
       var searchjson = tempdata['results'];

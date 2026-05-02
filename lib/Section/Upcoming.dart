@@ -19,8 +19,8 @@ class _UpcomingState extends State<Upcoming> {
 
   Future<void> getUpcoming() async {
     var url = Uri.parse(
-        'https://api.themoviedb.org/3/movie/upcoming?api_key=$apikey');
-    var response = await http.get(url);
+        'https://api.themoviedb.org/3/movie/upcoming');
+    var response = await http.get(url, headers: apiHeaders);
     if (response.statusCode == 200) {
       var json = jsonDecode(response.body);
       for (var i = 0; i < json['results'].length; i++) {

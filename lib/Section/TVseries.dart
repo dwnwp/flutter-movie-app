@@ -20,14 +20,14 @@ class _TVseriesState extends State<TVseries> {
   late Future<void> _tvFuture;
 
   var populartvseriesurl =
-      'https://api.themoviedb.org/3/tv/popular?api_key=$apikey';
+      'https://api.themoviedb.org/3/tv/popular';
   var topratedtvseriesurl =
-      'https://api.themoviedb.org/3/tv/top_rated?api_key=$apikey';
+      'https://api.themoviedb.org/3/tv/top_rated';
   var onairtvseriesurl =
-      'https://api.themoviedb.org/3/tv/on_the_air?api_key=$apikey';
+      'https://api.themoviedb.org/3/tv/on_the_air';
 
   Future<void> tvseriesfunction() async {
-    var popularresponse = await http.get(Uri.parse(populartvseriesurl));
+    var popularresponse = await http.get(Uri.parse(populartvseriesurl), headers: apiHeaders);
     if (popularresponse.statusCode == 200) {
       var tempdata = jsonDecode(popularresponse.body);
       var populartvjson = tempdata['results'];
@@ -42,7 +42,7 @@ class _TVseriesState extends State<TVseries> {
       }
     }
 
-    var topratedresponse = await http.get(Uri.parse(topratedtvseriesurl));
+    var topratedresponse = await http.get(Uri.parse(topratedtvseriesurl), headers: apiHeaders);
     if (topratedresponse.statusCode == 200) {
       var tempdata = jsonDecode(topratedresponse.body);
       var topratedtvjson = tempdata['results'];
@@ -57,7 +57,7 @@ class _TVseriesState extends State<TVseries> {
       }
     }
 
-    var onairresponse = await http.get(Uri.parse(onairtvseriesurl));
+    var onairresponse = await http.get(Uri.parse(onairtvseriesurl), headers: apiHeaders);
     if (onairresponse.statusCode == 200) {
       var tempdata = jsonDecode(onairresponse.body);
       var onairtvjson = tempdata['results'];

@@ -27,8 +27,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> trendinglist() async {
     var trendingweekurl =
-        'https://api.themoviedb.org/3/trending/all/week?api_key=$apikey';
-    var trendingweekresponse = await http.get(Uri.parse(trendingweekurl));
+        'https://api.themoviedb.org/3/trending/all/week';
+    var trendingweekresponse = await http.get(Uri.parse(trendingweekurl), headers: apiHeaders);
     if (trendingweekresponse.statusCode == 200) {
       var tempdata = jsonDecode(trendingweekresponse.body);
       var trendingweekjson = tempdata['results'];

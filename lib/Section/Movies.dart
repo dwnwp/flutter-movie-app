@@ -20,14 +20,14 @@ class _MoviesState extends State<Movies> {
   late Future<void> _moviesFuture;
 
   var popularmovieurl =
-      'https://api.themoviedb.org/3/movie/popular?api_key=$apikey';
+      'https://api.themoviedb.org/3/movie/popular';
   var nowplayingmovieurl =
-      'https://api.themoviedb.org/3/movie/now_playing?api_key=$apikey';
+      'https://api.themoviedb.org/3/movie/now_playing';
   var topratemovieurl =
-      'https://api.themoviedb.org/3/movie/top_rated?api_key=$apikey';
+      'https://api.themoviedb.org/3/movie/top_rated';
 
   Future<void> movieslist() async {
-    var popularmovieresponse = await http.get(Uri.parse(popularmovieurl));
+    var popularmovieresponse = await http.get(Uri.parse(popularmovieurl), headers: apiHeaders);
     if (popularmovieresponse.statusCode == 200) {
       var tempdata = jsonDecode(popularmovieresponse.body);
       var popularmoviejson = tempdata['results'];
@@ -42,7 +42,7 @@ class _MoviesState extends State<Movies> {
       }
     }
 
-    var nowplayresponse = await http.get(Uri.parse(nowplayingmovieurl));
+    var nowplayresponse = await http.get(Uri.parse(nowplayingmovieurl), headers: apiHeaders);
     if (nowplayresponse.statusCode == 200) {
       var tempdata = jsonDecode(nowplayresponse.body);
       var nowplayjson = tempdata['results'];
@@ -57,7 +57,7 @@ class _MoviesState extends State<Movies> {
       }
     }
 
-    var topratedmovieresponse = await http.get(Uri.parse(topratemovieurl));
+    var topratedmovieresponse = await http.get(Uri.parse(topratemovieurl), headers: apiHeaders);
     if (topratedmovieresponse.statusCode == 200) {
       var tempdata = jsonDecode(topratedmovieresponse.body);
       var topratedmoviejson = tempdata['results'];
