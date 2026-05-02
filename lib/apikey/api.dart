@@ -1,1 +1,3 @@
-String apikey = '70c1b30f841f25ef711072360299c551';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+String apikey = dotenv.env['TMDB_API_KEY'] ?? '';
