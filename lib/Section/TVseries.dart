@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:review888/apikey/api.dart';
 import 'package:review888/function/slider.dart';
+import 'package:review888/theme/app_theme.dart';
+import 'package:shimmer/shimmer.dart';
 
 class TVseries extends StatefulWidget {
   const TVseries({super.key});
@@ -15,12 +17,15 @@ class _TVseriesState extends State<TVseries> {
   List<Map<String, dynamic>> populartvseries = [];
   List<Map<String, dynamic>> onairtvseries = [];
   List<Map<String, dynamic>> topratedtvseries = [];
+  late Future<void> _tvFuture;
+
   var populartvseriesurl =
       'https://api.themoviedb.org/3/tv/popular?api_key=$apikey';
   var topratedtvseriesurl =
       'https://api.themoviedb.org/3/tv/top_rated?api_key=$apikey';
   var onairtvseriesurl =
       'https://api.themoviedb.org/3/tv/on_the_air?api_key=$apikey';
+
   Future<void> tvseriesfunction() async {
     var popularresponse = await http.get(Uri.parse(populartvseriesurl));
     if (popularresponse.statusCode == 200) {
@@ -35,9 +40,8 @@ class _TVseriesState extends State<TVseries> {
           'id': populartvjson[i]['id'],
         });
       }
-    } else {
-      print(popularresponse.statusCode);
     }
+
     var topratedresponse = await http.get(Uri.parse(topratedtvseriesurl));
     if (topratedresponse.statusCode == 200) {
       var tempdata = jsonDecode(topratedresponse.body);
@@ -51,8 +55,6 @@ class _TVseriesState extends State<TVseries> {
           'id': topratedtvjson[i]['id'],
         });
       }
-    } else {
-      print(topratedresponse.statusCode);
     }
 
     var onairresponse = await http.get(Uri.parse(onairtvseriesurl));
@@ -68,29 +70,60 @@ class _TVseriesState extends State<TVseries> {
           'id': onairtvjson[i]['id'],
         });
       }
-    } else {
-      print(onairresponse.statusCode);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tvFuture = tvseriesfunction();
+  }
+
+  Widget _buildShimmerList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(
+        3,
+        (_) => Padding(
+          padding: const EdgeInsets.only(left: 13, top: 15, bottom: 20),
+          child: SizedBox(
+            height: 250,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 4,
+              itemBuilder: (_, __) => Shimmer.fromColors(
+                baseColor: AppColors.surfaceLight,
+                highlightColor: AppColors.surfaceLighter,
+                child: Container(
+                  width: 170,
+                  margin: const EdgeInsets.only(right: 13),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: tvseriesfunction(),
+      future: _tvFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Colors.blue,
-            ),
-          );
+          return _buildShimmerList();
         } else {
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              sliderlist(populartvseries, "Popular TV Series", "TV", 20),
-              sliderlist(onairtvseries, "On air ", "TV", 20),
-              sliderlist(topratedtvseries, "Top Rated TV Series", "TV", 20)
+              sliderlist(populartvseries, "Popular TV Series", "tv", 20),
+              sliderlist(onairtvseries, "On Air", "tv", 20),
+              sliderlist(topratedtvseries, "Top Rated", "tv", 20),
             ],
           );
         }

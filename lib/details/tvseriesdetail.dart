@@ -1,320 +1,203 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:review888/function/slider.dart';
 import 'package:review888/function/review.dart';
 import 'package:review888/Homepage/Homepage.dart';
 import 'package:review888/function/trailerui.dart';
 import 'package:review888/apikey/api.dart';
+import 'package:review888/theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 
 class TvSeriesDetails extends StatefulWidget {
   var id;
   TvSeriesDetails({super.key, this.id});
-
   @override
   State<TvSeriesDetails> createState() => _TvSeriesDetailsState();
 }
 
 class _TvSeriesDetailsState extends State<TvSeriesDetails> {
-  var tvseriesdetaildata;
-  List<Map<String, dynamic>> TvSeriesDetails = [];
-  List<Map<String, dynamic>> TvSeriesREview = [];
-  List<Map<String, dynamic>> similarserieslist = [];
-  List<Map<String, dynamic>> recommendserieslist = [];
-  List<Map<String, dynamic>> seriestrailerslist = [];
+  Map<String, dynamic> detail = {};
+  List genres = [];
+  List creators = [];
+  List seasons = [];
+  List<Map<String, dynamic>> reviews = [];
+  List<Map<String, dynamic>> similarList = [];
+  List<Map<String, dynamic>> recommendList = [];
+  List<Map<String, dynamic>> trailers = [];
+  late Future<void> _detailFuture;
 
-  Future<void> tvseriesdetailfunc() async {
-    var tvseriesdetailurl =
-        'https://api.themoviedb.org/3/tv/${widget.id}?api_key=$apikey';
-    var tvseriesreviewurl =
-        'https://api.themoviedb.org/3/tv/${widget.id}/reviews?api_key=$apikey';
-    var similarseriesurl =
-        'https://api.themoviedb.org/3/tv/${widget.id}/similar?api_key=$apikey';
-    var recommendseriesurl =
-        'https://api.themoviedb.org/3/tv/${widget.id}/recommendations?api_key=$apikey';
-    var seriestrailersurl =
-        'https://api.themoviedb.org/3/tv/${widget.id}/videos?api_key=$apikey';
-    // 'https://api.themoviedb.org/3/tv/' +
-    //     widget.id.toString() +
-    //     '/videos?api_key=$apikey';
+  Future<void> _fetchDetails() async {
+    final base = 'https://api.themoviedb.org/3/tv/${widget.id}';
+    final responses = await Future.wait([
+      http.get(Uri.parse('$base?api_key=$apikey')),
+      http.get(Uri.parse('$base/reviews?api_key=$apikey')),
+      http.get(Uri.parse('$base/similar?api_key=$apikey')),
+      http.get(Uri.parse('$base/recommendations?api_key=$apikey')),
+      http.get(Uri.parse('$base/videos?api_key=$apikey')),
+    ]);
 
-    var tvseriesdetailresponse = await http.get(Uri.parse(tvseriesdetailurl));
-    if (tvseriesdetailresponse.statusCode == 200) {
-      tvseriesdetaildata = jsonDecode(tvseriesdetailresponse.body);
-      for (var i = 0; i < 1; i++) {
-        TvSeriesDetails.add({
-          'backdrop_path': tvseriesdetaildata['backdrop_path'],
-          'title': tvseriesdetaildata['original_name'],
-          'vote_average': tvseriesdetaildata['vote_average'],
-          'overview': tvseriesdetaildata['overview'],
-          'status': tvseriesdetaildata['status'],
-          'releasedate': tvseriesdetaildata['first_air_date'],
-        });
-      }
-      for (var i = 0; i < tvseriesdetaildata['genres'].length; i++) {
-        TvSeriesDetails.add({
-          'genre': tvseriesdetaildata['genres'][i]['name'],
-        });
-      }
-      for (var i = 0; i < tvseriesdetaildata['created_by'].length; i++) {
-        TvSeriesDetails.add({
-          'creator': tvseriesdetaildata['created_by'][i]['name'],
-          'creatorprofile': tvseriesdetaildata['created_by'][i]['profile_path'],
-        });
-      }
-      for (var i = 0; i < tvseriesdetaildata['seasons'].length; i++) {
-        TvSeriesDetails.add({
-          'season': tvseriesdetaildata['seasons'][i]['name'],
-          'episode_count': tvseriesdetaildata['seasons'][i]['episode_count'],
-        });
-      }
-    } else {}
-    ///////////////////////////////////////////tvseries review///////////////////////////////////////////
+    if (responses[0].statusCode == 200) {
+      var d = jsonDecode(responses[0].body);
+      detail = {
+        'title': d['original_name'], 'vote_average': d['vote_average'],
+        'overview': d['overview'], 'status': d['status'],
+        'releasedate': d['first_air_date'], 'backdrop_path': d['backdrop_path'],
+      };
+      genres = (d['genres'] as List).map((g) => g['name']).toList();
+      creators = (d['created_by'] as List).map((c) => {
+        'name': c['name'], 'profile_path': c['profile_path'],
+      }).toList();
+      seasons = (d['seasons'] as List).map((s) => {
+        'name': s['name'], 'episode_count': s['episode_count'],
+        'poster_path': s['poster_path'],
+      }).toList();
+    }
 
-    var tvseriesreviewresponse = await http.get(Uri.parse(tvseriesreviewurl));
-    if (tvseriesreviewresponse.statusCode == 200) {
-      var tvseriesreviewdata = jsonDecode(tvseriesreviewresponse.body);
-      for (var i = 0; i < tvseriesreviewdata['results'].length; i++) {
-        TvSeriesREview.add({
-          'name': tvseriesreviewdata['results'][i]['author'],
-          'review': tvseriesreviewdata['results'][i]['content'],
-          "rating": tvseriesreviewdata['results'][i]['author_details']
-                      ['rating'] ==
-                  null
-              ? "Not Rated"
-              : tvseriesreviewdata['results'][i]['author_details']['rating']
-                  .toString(),
-          "avatarphoto": tvseriesreviewdata['results'][i]['author_details']
-                      ['avatar_path'] ==
-                  null
-              ? "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-              : "https://image.tmdb.org/t/p/w500" +
-                  tvseriesreviewdata['results'][i]['author_details']
-                      ['avatar_path'],
-          "creationdate":
-              tvseriesreviewdata['results'][i]['created_at'].substring(0, 10),
-          "fullreviewurl": tvseriesreviewdata['results'][i]['url'],
+    if (responses[1].statusCode == 200) {
+      for (var r in jsonDecode(responses[1].body)['results']) {
+        reviews.add({
+          'name': r['author'], 'review': r['content'],
+          'rating': r['author_details']['rating']?.toString() ?? 'N/A',
+          'avatarphoto': r['author_details']['avatar_path'] != null
+              ? 'https://image.tmdb.org/t/p/w500${r['author_details']['avatar_path']}'
+              : 'https://www.gravatar.com/avatar/?d=mp',
+          'creationdate': r['created_at'].substring(0, 10),
         });
       }
-    } else {}
-    ///////////////////////////////////////////similar series
+    }
 
-    var similarseriesresponse = await http.get(Uri.parse(similarseriesurl));
-    if (similarseriesresponse.statusCode == 200) {
-      var similarseriesdata = jsonDecode(similarseriesresponse.body);
-      for (var i = 0; i < similarseriesdata['results'].length; i++) {
-        similarserieslist.add({
-          'poster_path': similarseriesdata['results'][i]['poster_path'],
-          'name': similarseriesdata['results'][i]['original_name'],
-          'vote_average': similarseriesdata['results'][i]['vote_average'],
-          'id': similarseriesdata['results'][i]['id'],
-          'Date': similarseriesdata['results'][i]['first_air_date'],
-        });
+    if (responses[2].statusCode == 200) {
+      for (var s in jsonDecode(responses[2].body)['results']) {
+        similarList.add({'poster_path': s['poster_path'], 'name': s['original_name'],
+          'vote_average': s['vote_average'], 'id': s['id'], 'Date': s['first_air_date']});
       }
-    } else {}
-    ///////////////////////////////////////////recommend series
+    }
 
-    var recommendseriesresponse = await http.get(Uri.parse(recommendseriesurl));
-    if (recommendseriesresponse.statusCode == 200) {
-      var recommendseriesdata = jsonDecode(recommendseriesresponse.body);
-      for (var i = 0; i < recommendseriesdata['results'].length; i++) {
-        recommendserieslist.add({
-          'poster_path': recommendseriesdata['results'][i]['poster_path'],
-          'name': recommendseriesdata['results'][i]['original_name'],
-          'vote_average': recommendseriesdata['results'][i]['vote_average'],
-          'id': recommendseriesdata['results'][i]['id'],
-          'Date': recommendseriesdata['results'][i]['first_air_date'],
-        });
+    if (responses[3].statusCode == 200) {
+      for (var r in jsonDecode(responses[3].body)['results']) {
+        recommendList.add({'poster_path': r['poster_path'], 'name': r['original_name'],
+          'vote_average': r['vote_average'], 'id': r['id'], 'Date': r['first_air_date']});
       }
-    } else {}
+    }
 
-    ///////////////////////////////////////////tvseries trailer///////////////////////////////////////////
-    var tvseriestrailerresponse = await http.get(Uri.parse(seriestrailersurl));
-    if (tvseriestrailerresponse.statusCode == 200) {
-      var tvseriestrailerdata = jsonDecode(tvseriestrailerresponse.body);
-      // print(tvseriestrailerdata);
-      for (var i = 0; i < tvseriestrailerdata['results'].length; i++) {
-        //add only if type is trailer
-        if (tvseriestrailerdata['results'][i]['type'] == "Trailer") {
-          seriestrailerslist.add({
-            'key': tvseriestrailerdata['results'][i]['key'],
-          });
-        }
+    if (responses[4].statusCode == 200) {
+      for (var v in jsonDecode(responses[4].body)['results']) {
+        if (v['type'] == 'Trailer') trailers.add({'key': v['key']});
       }
-      seriestrailerslist.add({'key': 'aJ0cZTcTh90'});
-    } else {}
-    print(seriestrailerslist);
+      if (trailers.isEmpty) trailers.add({'key': 'aJ0cZTcTh90'});
+    }
   }
 
   @override
-  void initState() {
-    super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: [SystemUiOverlay.bottom]);
-    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  }
+  void initState() { super.initState(); _detailFuture = _fetchDetails(); }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(18, 18, 18, 0.9),
-        title: const Text('FlixSphere'), // ใส่ชื่อของ AppBar
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(FontAwesomeIcons.circleArrowLeft),
-          iconSize: 28,
-          color: Colors.amber,
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyHomePage(),
-                  ),
-                  (Route) => false);
-            },
-            icon: const Icon(FontAwesomeIcons.houseUser),
-            iconSize: 25,
-            color: Colors.amber,
-          ),
-        ],
-      ),
-      backgroundColor: const Color.fromRGBO(14, 14, 14, 1),
-      body: FutureBuilder(
-          future: tvseriesdetailfunc(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverAppBar(
-                        automaticallyImplyLeading: false,
-                        expandedHeight:
-                            MediaQuery.of(context).size.height * 0.35,
-                        flexibleSpace: FlexibleSpaceBar(
-                          collapseMode: CollapseMode.parallax,
-                          background: FittedBox(
-                            fit: BoxFit.fill,
-                            child: trailerwatch(
-                              seriestrailerslist[0]['key'],
-                            ),
-                          ),
-                        )),
-                    SliverList(
-                        delegate: SliverChildListDelegate([
-                      Row(children: [
-                        Container(
-                            padding: const EdgeInsets.only(left: 10, top: 10),
-                            height: 50,
-                            width: MediaQuery.of(context).size.width,
-                            child: ListView.builder(
-                                physics: const BouncingScrollPhysics(),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: tvseriesdetaildata['genres']!.length,
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                      margin: const EdgeInsets.only(right: 10),
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                          color: const Color.fromRGBO(
-                                              25, 25, 25, 1),
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                      child: Text(TvSeriesDetails[index + 1]
-                                              ['genre']
-                                          .toString()));
-                                }))
-                      ]),
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 12),
-                          child: const Text("Series Overview : ")),
 
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 20),
-                          child:
-                              Text(TvSeriesDetails[0]['overview'].toString())),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20.0, top: 10),
-                        child: ReviewUI(TvSeriesREview),
-                      ),
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 20),
-                          child:
-                              Text("Status : ${TvSeriesDetails[0]['status']}")),
-                      //created by
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 20),
-                          child: const Text("Created By : ")),
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 10),
-                          height: 150,
-                          width: MediaQuery.of(context).size.width,
-                          child: ListView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              scrollDirection: Axis.horizontal,
-                              itemCount:
-                                  tvseriesdetaildata['created_by']!.length,
-                              itemBuilder: (context, index) {
-                                //generes box
-                                return Container(
-                                    margin: const EdgeInsets.only(right: 10),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                        color:
-                                            const Color.fromRGBO(25, 25, 25, 1),
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    child: Row(children: [
-                                      Column(children: [
-                                        CircleAvatar(
-                                            radius: 45,
-                                            backgroundImage: NetworkImage(
-                                                'https://image.tmdb.org/t/p/w500${TvSeriesDetails[index + 4]['creatorprofile']}')),
-                                        const SizedBox(height: 10),
-                                        Text(TvSeriesDetails[index + 4]
-                                                ['creator']
-                                            .toString())
-                                      ])
-                                    ]));
-                              })),
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 20),
-                          child: Text(
-                              "Total Seasons : ${tvseriesdetaildata['seasons'].length}")),
-                      //airdate
-                      Container(
-                          padding: const EdgeInsets.only(left: 10, top: 20),
-                          child: Text(
-                              "Release date : ${TvSeriesDetails[0]['releasedate']}")),
-                      sliderlist(similarserieslist, 'Similar Series', 'TV',
-                          similarserieslist.length),
-                      sliderlist(recommendserieslist, 'Recommended Series',
-                          'TV', recommendserieslist.length),
-                      Container(
-                          //     height: 50,
-                          //     child: Center(child: normaltext("By Niranjan Dahal"))
-                          )
-                    ]))
-                  ]);
-            } else {
-              return Center(
-                  child:
-                      CircularProgressIndicator(color: Colors.amber.shade400));
-            }
-          }),
+      appBar: AppBar(
+        backgroundColor: AppColors.surface.withAlpha(200),
+        title: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.movie_filter_rounded, color: AppColors.accent, size: 24),
+          const SizedBox(width: 8), const Text('FlixSphere'),
+        ]),
+        centerTitle: true, automaticallyImplyLeading: false,
+        leading: IconButton(onPressed: () => Navigator.pop(context),
+          icon: const FaIcon(FontAwesomeIcons.circleArrowLeft), iconSize: 24, color: AppColors.accent),
+        actions: [IconButton(onPressed: () {
+          Navigator.pushAndRemoveUntil(context,
+            MaterialPageRoute(builder: (_) => const MyHomePage()), (_) => false);
+        }, icon: const FaIcon(FontAwesomeIcons.houseUser), iconSize: 22, color: AppColors.accent)],
+      ),
+      backgroundColor: AppColors.background,
+      body: FutureBuilder(
+        future: _detailFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return Center(child: Shimmer.fromColors(
+              baseColor: AppColors.accent, highlightColor: AppColors.accentLight,
+              child: const Icon(Icons.tv_rounded, size: 48)));
+          }
+          if (detail.isEmpty) return const Center(child: Text('Failed to load', style: TextStyle(color: AppColors.textMuted)));
+
+          return CustomScrollView(physics: const BouncingScrollPhysics(), slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.black,
+                width: double.infinity,
+                child: trailerwatch(trailers[0]['key']),
+              ),
+            ),
+            SliverList(delegate: SliverChildListDelegate([
+              Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Title
+                Text(detail['title'] ?? '', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                const SizedBox(height: 12),
+                // Rating + Status + Date
+                Wrap(spacing: 10, runSpacing: 8, children: [
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: AppDecorations.ratingBadge(),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.star_rounded, color: AppColors.accent, size: 20), const SizedBox(width: 4),
+                      Text('${detail['vote_average']?.toStringAsFixed(1) ?? 'N/A'}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                    ])),
+                  _chip(Icons.info_outline_rounded, detail['status'] ?? '?'),
+                  _chip(Icons.calendar_today_rounded, detail['releasedate'] ?? '?'),
+                ]),
+                const SizedBox(height: 16),
+                // Genres
+                SizedBox(height: 36, child: ListView.builder(physics: const BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal, itemCount: genres.length,
+                  itemBuilder: (_, i) => Container(margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), decoration: AppDecorations.genreChip,
+                    child: Center(child: Text(genres[i], style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)))))),
+                const SizedBox(height: 24),
+                // Overview
+                _sectionTitle('Overview'),
+                const SizedBox(height: 10),
+                Text(detail['overview'] ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.6)),
+                const SizedBox(height: 24),
+                // Seasons & Episodes info
+                Row(children: [
+                  Expanded(child: _statCard(Icons.video_library_rounded, AppColors.accent, 'Seasons', '${seasons.length}')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _statCard(Icons.play_circle_outline_rounded, AppColors.teal, 'Total Episodes',
+                    '${seasons.fold<int>(0, (sum, s) => sum + ((s['episode_count'] ?? 0) as int))}')),
+                ]),
+
+              ])),
+              // Reviews
+              Padding(padding: const EdgeInsets.only(left: 16, top: 8), child: ReviewUI(reviews)),
+              if (similarList.isNotEmpty) sliderlist(similarList, 'Similar Series', 'tv', similarList.length),
+              if (recommendList.isNotEmpty) sliderlist(recommendList, 'Recommended', 'tv', recommendList.length),
+              const SizedBox(height: 40),
+            ])),
+          ]);
+        },
+      ),
     );
   }
+
+  Widget _chip(IconData icon, String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: AppDecorations.genreChip,
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 16, color: AppColors.accent), const SizedBox(width: 6),
+      Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+    ]));
+
+  Widget _sectionTitle(String t) => Row(children: [
+    Container(width: 4, height: 20, decoration: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(2))),
+    const SizedBox(width: 10),
+    Text(t, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+  ]);
+
+  Widget _statCard(IconData icon, Color color, String label, String value) => Container(
+    padding: const EdgeInsets.all(16), decoration: AppDecorations.glassCard,
+    child: Column(children: [
+      Icon(icon, color: color, size: 24), const SizedBox(height: 8),
+      Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)), const SizedBox(height: 4),
+      Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+    ]));
 }

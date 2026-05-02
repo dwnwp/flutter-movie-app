@@ -3,6 +3,8 @@ import 'package:review888/apikey/api.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:review888/function/slider.dart';
+import 'package:review888/theme/app_theme.dart';
+import 'package:shimmer/shimmer.dart';
 
 class Movies extends StatefulWidget {
   const Movies({super.key});
@@ -15,6 +17,7 @@ class _MoviesState extends State<Movies> {
   List<Map<String, dynamic>> popularmovie = [];
   List<Map<String, dynamic>> nowplaymovie = [];
   List<Map<String, dynamic>> topratemovie = [];
+  late Future<void> _moviesFuture;
 
   var popularmovieurl =
       'https://api.themoviedb.org/3/movie/popular?api_key=$apikey';
@@ -37,8 +40,6 @@ class _MoviesState extends State<Movies> {
           'id': popularmoviejson[i]['id'],
         });
       }
-    } else {
-      print(popularmovieresponse.statusCode);
     }
 
     var nowplayresponse = await http.get(Uri.parse(nowplayingmovieurl));
@@ -54,8 +55,6 @@ class _MoviesState extends State<Movies> {
           'id': nowplayjson[i]['id'],
         });
       }
-    } else {
-      print(nowplayresponse.statusCode);
     }
 
     var topratedmovieresponse = await http.get(Uri.parse(topratemovieurl));
@@ -71,27 +70,60 @@ class _MoviesState extends State<Movies> {
           'id': topratedmoviejson[i]['id'],
         });
       }
-    } else {
-      print(topratedmovieresponse.statusCode);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _moviesFuture = movieslist();
+  }
+
+  Widget _buildShimmerList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(
+        3,
+        (_) => Padding(
+          padding: const EdgeInsets.only(left: 13, top: 15, bottom: 20),
+          child: SizedBox(
+            height: 250,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 4,
+              itemBuilder: (_, __) => Shimmer.fromColors(
+                baseColor: AppColors.surfaceLight,
+                highlightColor: AppColors.surfaceLighter,
+                child: Container(
+                  width: 170,
+                  margin: const EdgeInsets.only(right: 13),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: movieslist(),
+      future: _moviesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator(
-            color: Colors.blue,
-          );
+          return _buildShimmerList();
         } else {
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               sliderlist(popularmovie, "Popular Movies", "movie", 20),
-              sliderlist(topratemovie, "Now Playing Movies", "movie", 20),
-              sliderlist(nowplaymovie, "Top Rated Movies", "movie", 20),
+              sliderlist(nowplaymovie, "Now Playing", "movie", 20),
+              sliderlist(topratemovie, "Top Rated", "movie", 20),
             ],
           );
         }
