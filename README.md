@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# FlixSphere
-=======
 # Flutter Movie App
->>>>>>> 852cb79ddbd2025262b00888027fd727166e0a3f
 
 **FlixSphere** is a modern, premium Flutter application for discovering Movies and TV Series. Powered by the TMDB API, it provides users with up-to-date trending content, deep insights, trailers, and reviews, all wrapped in a sleek, glassmorphic dark theme.
 
